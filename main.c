@@ -91,9 +91,14 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 			new_tsc_offset -= tsc_shift_back;
 			off_info->temp_offset -= tsc_shift_back;
 	}
-
-	if (tsc_offset ^ new_tsc_offset)
-			vcpu->arch.tsc_offset = write_tsc_offset(vcpu, new_tsc_offset);
+//        vcpu->arch.l1_tsc_offset = new_tsc_offset;
+//	if (tsc_offset ^ new_tsc_offset)
+//		vcpu->arch.tsc_offset = kvm_x86_ops.write_tsc_offset(vcpu);
+if (tsc_offset ^ new_tsc_offset) {
+    vcpu->arch.l1_tsc_offset = new_tsc_offset;
+    if (kvm_x86_ops.write_tsc_offset)
+        kvm_x86_ops.write_tsc_offset(vcpu);
+}
 
 	off_info->called_cpuid = 0;
 }
