@@ -80,7 +80,7 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 			/*if (kvm_set_tsc_khz)
 				kvm_set_tsc_khz(vcpu, tsc_khz * 10);*/
 			cur_tsc = rdtsc();
-			off = -kvm_scale_tsc(vcpu, tsc_off + cur_tsc - off_info->vmexit_tsc);
+			off = -kvm_scale_tsc(cur_tsc, tsc_off + cur_tsc - off_info->vmexit_tsc);
 			new_tsc_offset += off;
 			off_info->temp_offset += off;
 
@@ -93,7 +93,7 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 	}
 
 	if (tsc_offset ^ new_tsc_offset)
-			vcpu->arch.tsc_offset = kvm_x86_ops.write_l1_tsc_offset(vcpu, new_tsc_offset);
+			vcpu->arch.tsc_offset = write_tsc_offset(vcpu, new_tsc_offset);
 
 	off_info->called_cpuid = 0;
 }
