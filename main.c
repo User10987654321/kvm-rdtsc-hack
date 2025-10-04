@@ -9,6 +9,8 @@ MODULE_LICENSE("GPL");
 
 static int vmhook_init(void);
 static void vmhook_fini(void);
+static struct kvm_x86_ops *ptr_kvm_x86_ops;
+static u64 (*ptr_kvm_scale_tsc)(u64 tsc, u64 radio);
 
 module_init(vmhook_init);
 module_exit(vmhook_fini);
@@ -80,7 +82,7 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 			/*if (kvm_set_tsc_khz)
 				kvm_set_tsc_khz(vcpu, tsc_khz * 10);*/
 			cur_tsc = rdtsc();
-			off = -kvm_scale_tsc(cur_tsc, tsc_off + cur_tsc - off_info->vmexit_tsc);
+			off = -ptr_kvm_scale_tsc(cur_tsc, tsc_off + cur_tsc - off_info->vmexit_tsc);
 			new_tsc_offset += off;
 			off_info->temp_offset += off;
 
@@ -96,8 +98,8 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 //		vcpu->arch.tsc_offset = kvm_x86_ops.write_tsc_offset(vcpu);
 if (tsc_offset ^ new_tsc_offset) {
     vcpu->arch.l1_tsc_offset = new_tsc_offset;
-    if (kvm_x86_ops.write_tsc_offset)
-        kvm_x86_ops.write_tsc_offset(vcpu);
+    if (ptr_kvm_x86_ops->write_tsc_offset)
+        ptr_kvm_x86_ops->write_tsc_offset(vcpu);
 }
 
 	off_info->called_cpuid = 0;
@@ -158,7 +160,13 @@ static int vmhook_init(void)
 	if ((ret = init_kallsyms()))
 		return ret;
 
+	ptr_kvm_x86_ops = (struct kvm_x86_ops *)kallsyms_lookup_name("kvm_x86_ops");
+	ptr_kvm_scale_tsc = (u64 (*)(u64, u64))kallsyms_lookup_name("ptr_kvm_scale_tsc");
+
 	kvm_set_tsc_khz = (typeof(kvm_set_tsc_khz))kallsyms_lookup_name("kvm_set_tsc_khz");
+        
+        if (!ptr_kvm_x86_ops || !ptr_kvm_scale_tsc || !kvm_set_tsc_khz)
+		return error_quit("Faild to lookup KVM symbols!");
 
 	ret = start_hook_list(hook_list, ARRAY_SIZE(hook_list));
 
