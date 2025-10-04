@@ -71,7 +71,7 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 	struct vcpu_offset_info *off_info;
 	int tsc_off = constant_tsc_offset;
 
-	tsc_offset = vcpu->arch.l1_tsc_offset;
+//	tsc_offset = vcpu->arch.l1_tsc_offset;
 	new_tsc_offset = tsc_offset;
 	off_info = get_cpu_offset_info(vcpu);
 
@@ -97,7 +97,7 @@ static void vcpu_pre_run(struct kvm_vcpu *vcpu) {
 //	if (tsc_offset ^ new_tsc_offset)
 //		vcpu->arch.tsc_offset = kvm_x86_ops.write_tsc_offset(vcpu);
 if (tsc_offset ^ new_tsc_offset) {
-    vcpu->arch.l1_tsc_offset = new_tsc_offset;
+ //   vcpu->arch.l1_tsc_offset = new_tsc_offset;
     if (ptr_kvm_x86_ops->write_tsc_offset)
         ptr_kvm_x86_ops->write_tsc_offset(vcpu);
 }
@@ -160,7 +160,7 @@ static int vmhook_init(void)
 	if ((ret = init_kallsyms()))
 		return ret;
 
-	ptr_kvm_x86_ops = (struct kvm_x86_ops *)kallsyms_lookup_name("kvm_x86_ops");
+	ptr_kvm_x86_ops = (struct kvm_x86_ops *)kallsyms_lookup_name("ptr_kvm_x86_ops");
 	ptr_kvm_scale_tsc = (u64 (*)(u64, u64))kallsyms_lookup_name("ptr_kvm_scale_tsc");
 
 	kvm_set_tsc_khz = (typeof(kvm_set_tsc_khz))kallsyms_lookup_name("kvm_set_tsc_khz");
